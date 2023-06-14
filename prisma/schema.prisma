@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  credentials               Credential[]
+  credentialCreationProcess CredentialCreationProcess[]
+
+  @@map("users")
+}
+
+model Credential {
+  id        String           @id @default(uuid())
+  url       String
+  userId    String
+  status    CredentialStatus
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user                      User                        @relation(fields: [userId], references: [id])
+  credentialCreationProcess CredentialCreationProcess[]
+
+  @@map("credentials")
+}
+
+enum CredentialStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+model CredentialCreationProcess {
+  id           String           @id @default(uuid())
+  url          String
+  userId       String
+  credentialId String?
+  status       ProcessingStatus
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  user         User             @relation(fields: [userId], references: [id])
+  credential   Credential?      @relation(fields: [credentialId], references: [id])
+
+  @@map("credential_creation_processes")
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  ERROR
+}
